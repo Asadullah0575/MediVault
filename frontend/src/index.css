@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --green-900: #0F2D1C;
+  --green-800: #1B4D2E;
+  --green-700: #1B6B45;
+  --green-500: #2DA36A;
+  --green-300: #5CAE85;
+  --green-100: #A8D5BC;
+  --green-50:  #E6F7EE;
+  --bg:        #F4F9F6;
+  --bg-card:   #FFFFFF;
+  --text-main: #1A2E24;
+  --text-muted:#4A6B58;
+  --text-faint:#6B8C78;
+  --border:    rgba(45,163,106,0.15);
+  --shadow-sm: 0 2px 12px rgba(15,45,28,0.07);
+  --shadow-md: 0 8px 32px rgba(15,45,28,0.10);
+  --shadow-lg: 0 20px 60px rgba(15,45,28,0.13);
+  --r-sm: 8px;
+  --r:    14px;
+  --r-lg: 20px;
+  --font-display: 'Playfair Display', serif;
+  --font-body:    'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--green-100); border-radius: 3px; }
+
+[data-rk] {
+  --rk-colors-accentColor: #1B6B45 !important;
+  --rk-colors-accentColorForeground: #fff !important;
+  --rk-radii-connectButton: 10px !important;
+}

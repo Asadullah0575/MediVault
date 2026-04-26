@@ -1,0 +1,40 @@
+.overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(15,45,28,0.45);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: #fff; border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg); padding: 32px 30px;
+  width: 100%; max-width: 480px;
+  border: 1px solid var(--border);
+}
+.modalHeader { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.modalHeader h2 { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--green-900); }
+.closeBtn { width: 30px; height: 30px; border-radius: 50%; background: var(--green-50); border: 1px solid var(--border); color: var(--text-faint); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .18s; }
+.closeBtn:hover { background: #ffe0e0; color: #b83232; border-color: rgba(200,50,50,.2); }
+.modalSub { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+.fheBanner { background: var(--green-50); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 10px 14px; font-size: 12.5px; font-weight: 500; color: var(--green-700); margin-bottom: 22px; }
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.field label { font-size: 12.5px; font-weight: 600; color: var(--green-900); }
+.unit { font-weight: 400; color: var(--text-faint); margin-left: 4px; }
+.input { padding: 10px 14px; border-radius: var(--r-sm); border: 1.5px solid var(--border); font-family: var(--font-body); font-size: 14px; color: var(--green-900); background: #F7FBF8; transition: border-color .18s; outline: none; }
+.input:focus { border-color: var(--green-500); background: #fff; }
+.input::placeholder { color: var(--text-faint); }
+.select { padding: 10px 14px; border-radius: var(--r-sm); border: 1.5px solid var(--border); font-family: var(--font-body); font-size: 14px; color: var(--green-900); background: #F7FBF8; outline: none; cursor: pointer; }
+.select:focus { border-color: var(--green-500); }
+.fieldRow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fieldErr { font-size: 12px; color: #b83232; }
+.accessInfo { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.accessInfoRow { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
+.modalActions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 8px; }
+.btnCancel { padding: 10px 20px; border-radius: var(--r-sm); background: #F7FBF8; border: 1px solid var(--border); color: var(--text-muted); font-family: var(--font-body); font-size: 13px; cursor: pointer; transition: all .18s; }
+.btnCancel:hover { background: #ffe0e0; color: #b83232; }
+.btnCancel:disabled { opacity: .5; cursor: not-allowed; }
+.btnSubmit { display: flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: var(--r-sm); background: linear-gradient(135deg,#1B6B45,#2DA36A); color: #fff; border: none; font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btnSubmit:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(27,107,69,.25); }
+.btnSubmit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.btnSpinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.35); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
