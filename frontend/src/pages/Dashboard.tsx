@@ -1,8 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMediVault, HealthRecord } from "../hooks/useMediVault";
+import { useMediVault } from "../hooks/useMediVault";
 import AddRecordModal from "../components/AddRecordModal";
 import GrantAccessModal from "../components/GrantAccessModal";
 import styles from "./Dashboard.module.css";
@@ -55,7 +55,8 @@ export default function Dashboard() {
 
   return (
     <div className={styles.root}>
-      {/* ── Sidebar ────────────────────────────────── */}
+
+      {/* ── Sidebar ── */}
       <aside className={styles.sidebar}>
         <div className={styles.sidebarLogo} onClick={() => navigate("/")}>
           <div className={styles.sideLogoMark}>🔐</div>
@@ -70,19 +71,27 @@ export default function Dashboard() {
           <div className={`${styles.sideItem} ${styles.sideItemActive}`}>
             <span>⬡</span> Dashboard
           </div>
-          <div className={styles.sideItem}><span>📋</span> My Records
+          <div className={styles.sideItem} onClick={() => document.getElementById("records-section")?.scrollIntoView({ behavior: "smooth" })}>
+            <span>📋</span> My Records
             <span className={styles.sideBadge}>{records.length}</span>
           </div>
-          <div className={styles.sideItem}><span>🩺</span> Doctors
+          <div className={styles.sideItem} onClick={() => document.getElementById("doctors-section")?.scrollIntoView({ behavior: "smooth" })}>
+            <span>🩺</span> Doctors
             <span className={styles.sideBadge}>{grantedDoctors.length}</span>
           </div>
-          <div className={styles.sideItem}><span>🔑</span> Access Grants</div>
+          <div className={styles.sideItem} onClick={() => document.getElementById("doctors-section")?.scrollIntoView({ behavior: "smooth" })}>
+            <span>🔑</span> Access Grants
+          </div>
         </div>
 
         <div className={styles.sideSection}>
           <div className={styles.sideSectionLabel}>Network</div>
-          <div className={styles.sideItem}><span>⛓</span> Sepolia Testnet</div>
-          <div className={styles.sideItem}><span>⚙</span> Settings</div>
+          <div className={styles.sideItem} onClick={() => window.open("https://sepolia.etherscan.io", "_blank")}>
+            <span>⛓</span> Sepolia Testnet
+          </div>
+          <div className={styles.sideItem} onClick={() => navigate("/")}>
+            <span>⚙</span> Settings
+          </div>
         </div>
 
         <div className={styles.sideFooter}>
@@ -97,8 +106,9 @@ export default function Dashboard() {
         </div>
       </aside>
 
-      {/* ── Main ───────────────────────────────────── */}
+      {/* ── Main ── */}
       <main className={styles.main}>
+
         {/* topbar */}
         <div className={styles.topbar}>
           <div>
@@ -111,7 +121,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* error / tx feedback */}
+        {/* alerts */}
         <AnimatePresence>
           {error && (
             <motion.div className={styles.alertError} initial={{opacity:0,y:-8}} animate={{opacity:1,y:0}} exit={{opacity:0}}>
@@ -131,11 +141,11 @@ export default function Dashboard() {
         {/* stat cards */}
         <div className={styles.statsRow}>
           {[
-            { icon:"🔐", val: records.length, label:"Encrypted Records",  change:"FHE secured" },
-            { icon:"🩺", val: grantedDoctors.length, label:"Active Doctors", change:"Access granted" },
-            { icon:"⛓", val: totalStored,    label:"Total Records Stored",change:"On-chain" },
-            { icon:"🛡", val:"100%",          label:"FHE Coverage",        change:"euint32 encrypted" },
-          ].map((s,i) => (
+            { icon:"🔐", val: records.length,         label:"Encrypted Records",    change:"FHE secured" },
+            { icon:"🩺", val: grantedDoctors.length,  label:"Active Doctors",       change:"Access granted" },
+            { icon:"⛓",  val: totalStored,            label:"Total Records Stored", change:"On-chain" },
+            { icon:"🛡",  val:"100%",                  label:"FHE Coverage",         change:"euint32 encrypted" },
+          ].map((s, i) => (
             <motion.div key={s.label} className={styles.statCard}
               initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} transition={{delay:i*0.07}}>
               <div className={styles.statIcon}>{s.icon}</div>
@@ -147,7 +157,7 @@ export default function Dashboard() {
         </div>
 
         {/* records table */}
-        <div className={styles.section}>
+        <div className={styles.section} id="records-section">
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Health Records</h2>
             <button className={styles.btnSecondary} onClick={() => setShowAdd(true)}>＋ New record</button>
@@ -196,8 +206,9 @@ export default function Dashboard() {
         </div>
 
         {/* bottom grid */}
-        <div className={styles.bottomGrid}>
-          {/* Doctor access panel */}
+        <div className={styles.bottomGrid} id="doctors-section">
+
+          {/* Doctor access */}
           <div className={styles.panel}>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>Doctor Access</h2>
@@ -246,7 +257,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* ── Modals ─────────────────────────────────── */}
+      {/* ── Modals ── */}
       <AnimatePresence>
         {showAdd && (
           <AddRecordModal

@@ -1,17 +1,30 @@
-import { DeployFunction } from "hardhat-deploy/types";
-import { HardhatRuntimeEnvironment } from "hardhat/types";
+import hre from "hardhat";
 
-const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployer } = await hre.getNamedAccounts();
-  const { deploy } = hre.deployments;
+async function main() {
+  const ethers = hre.ethers;
+  const [deployer] = await ethers.getSigners();
+  
+  console.log("Deploying MediVault with:", deployer.address);
+  
+  const balance = await ethers.provider.getBalance(deployer.address);
+  console.log("Balance:", ethers.formatEther(balance), "ETH");
 
-  const deployedFHECounter = await deploy("FHECounter", {
-    from: deployer,
-    log: true,
-  });
+  const Factory = await ethers.getContractFactory("ConfidentialHealthRecords");
+  console.log("Deploying contract...");
+  
+  const contract = await Factory.deploy();
+  console.log("Waiting for deployment...");
+  
+  await contract.waitForDeployment();
+  const address = await contract.getAddress();
+  
+  console.log("✅ ConfidentialHealthRecords deployed to:", address);
+  console.log("Network: Sepolia");
+  console.log("\nSave this address! Add to frontend/.env:");
+  console.log(`VITE_CONTRACT_ADDRESS=${address}`);
+}
 
-  console.log(`FHECounter contract: `, deployedFHECounter.address);
-};
-export default func;
-func.id = "deploy_fheCounter"; // id required to prevent reexecution
-func.tags = ["FHECounter"];
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

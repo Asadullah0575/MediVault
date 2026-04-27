@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS as string;
+export const CONTRACT_ADDRESS = "0xEeef654Bc2B1D5287975B38E659B3ee0b348db15";
 
 export const CONTRACT_ABI = [
   { name: "addRecord", type: "function", stateMutability: "nonpayable",
