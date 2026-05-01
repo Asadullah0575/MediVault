@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = "0xEeef654Bc2B1D5287975B38E659B3ee0b348db15";
+export const CONTRACT_ADDRESS = "0xbDb8E0Cb6Fc7e0857af7D2EAd33EcFb6CB9AfaDA";
 
 export const CONTRACT_ABI = [
   { name: "addRecord", type: "function", stateMutability: "nonpayable",
@@ -12,6 +12,7 @@ export const CONTRACT_ABI = [
       { name: "glucoseProof", type: "bytes" },
       { name: "tempProof", type: "bytes" },
       { name: "recordType", type: "string" },
+      { name: "metadata",      type: "string" },
     ], outputs: [] },
   { name: "grantAccess", type: "function", stateMutability: "nonpayable",
     inputs: [{ name: "doctor", type: "address" }], outputs: [] },
@@ -38,6 +39,12 @@ export const CONTRACT_ABI = [
     outputs: [{ name: "", type: "bool" }] },
   { name: "totalRecordsStored", type: "function", stateMutability: "view",
     inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { name: "getMyPatients", type: "function", stateMutability: "view",
+  inputs: [{ name: "doctor", type: "address" }],
+  outputs: [{ name: "", type: "address[]" }], },
+  { name: "getRecordMetadata", type: "function", stateMutability: "view",
+  inputs: [{ name: "patient", type: "address" }, { name: "index",   type: "uint256" }],
+  outputs: [{ name: "", type: "string" }], },
   { name: "RecordAdded", type: "event",
     inputs: [
       { name: "patient", type: "address", indexed: true },
@@ -57,4 +64,26 @@ export const CONTRACT_ABI = [
       { name: "doctor", type: "address", indexed: true },
       { name: "timestamp", type: "uint256", indexed: false },
     ] },
+    {
+  name: "registerAsDoctor",
+  type: "function",
+  stateMutability: "nonpayable",
+  inputs: [],
+  outputs: [],
+},
+{
+  name: "isRegisteredDoctor",
+  type: "function",
+  stateMutability: "view",
+  inputs: [{ name: "account", type: "address" }],
+  outputs: [{ name: "", type: "bool" }],
+},
+{
+  name: "DoctorRegistered",
+  type: "event",
+  inputs: [
+    { name: "doctor", type: "address", indexed: true },
+    { name: "timestamp", type: "uint256", indexed: false },
+  ],
+},
 ] as const;

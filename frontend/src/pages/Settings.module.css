@@ -1,0 +1,30 @@
+.root { min-height: 100vh; background: var(--bg); padding: 32px 6%; max-width: 800px; margin: 0 auto; }
+.header { display: flex; align-items: center; gap: 20px; margin-bottom: 32px; }
+.backBtn { background: none; border: none; font-size: 13.5px; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); transition: color .2s; padding: 0; }
+.backBtn:hover { color: var(--green-700); }
+.title { font-family: var(--font-display); font-size: 28px; font-style: italic; color: var(--green-900); }
+.content { display: flex; flex-direction: column; gap: 16px; }
+.section { background: #fff; border: 1px solid var(--border); border-radius: var(--r-lg); padding: 24px; }
+.sectionTitle { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--green-900); margin-bottom: 18px; }
+.row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(45,163,106,0.06); gap: 16px; flex-wrap: wrap; }
+.row:last-child { border-bottom: none; }
+.rowLabel { font-size: 13.5px; font-weight: 500; color: var(--green-900); }
+.rowValue { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.address { font-family: monospace; font-size: 12px; color: var(--text-muted); background: #F7FBF8; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
+.roleBadge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.patientBadge { background: var(--green-50); color: var(--green-700); border: 1px solid var(--border); }
+.doctorBadge  { background: #EEF4FF; color: #3B6EA8; border: 1px solid rgba(107,158,212,0.3); }
+.networkBadge { background: #F7FBF8; border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-size: 12px; color: var(--text-muted); }
+.btnSwitch { padding: 6px 14px; border-radius: var(--r-sm); background: var(--green-50); border: 1px solid var(--border); color: var(--green-700); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .18s; }
+.btnSwitch:hover { background: #d4f0e2; }
+.btnLink { background: none; border: none; color: var(--green-500); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: var(--font-body); transition: color .2s; }
+.btnLink:hover { color: var(--green-700); }
+.infoBox { display: flex; flex-direction: column; gap: 10px; }
+.infoRow { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--text-muted); }
+.dangerSection { border-color: rgba(200,50,50,0.2); }
+.dangerSection .sectionTitle { color: #B83232; }
+.dangerRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dangerTitle { font-size: 14px; font-weight: 600; color: var(--green-900); margin-bottom: 4px; }
+.dangerSub   { font-size: 12.5px; color: var(--text-faint); }
+.btnDanger { padding: 9px 18px; border-radius: var(--r-sm); background: #FFF0F0; border: 1px solid rgba(200,50,50,0.2); color: #B83232; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .18s; }
+.btnDanger:hover { background: #FFE0E0; }

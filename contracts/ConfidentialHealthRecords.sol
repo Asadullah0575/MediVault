@@ -4,43 +4,31 @@ pragma solidity ^0.8.24;
 import "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
-/**
- * @title ConfidentialHealthRecords
- * @notice MediVault — FHE-encrypted patient health records on Sepolia
- * @dev Uses FHEVM so encrypted data is never exposed on-chain
- */
 contract ConfidentialHealthRecords is ZamaEthereumConfig {
 
-    // ─── Structs ──────────────────────────────────────────────────
     struct HealthRecord {
-        euint32 heartRate;        // encrypted bpm
-        euint32 oxygenLevel;      // encrypted %
-        euint32 glucoseLevel;     // encrypted mg/dL
-        euint32 temperature;      // encrypted °C × 10 (e.g. 366 = 36.6°C)
+        euint32 heartRate;
+        euint32 oxygenLevel;
+        euint32 glucoseLevel;
+        euint32 temperature;
         uint256 timestamp;
-        string  recordType;       // "blood_panel" | "vitals" | "xray" | "vaccination"
+        string  recordType;
         bool    exists;
     }
 
-    // ─── State ────────────────────────────────────────────────────
-    // patient address => array of records
     mapping(address => HealthRecord[]) private patientRecords;
-
-    // patient => doctor => is access granted
     mapping(address => mapping(address => bool)) private accessGrants;
-
-    // patient => list of doctors they granted access to
     mapping(address => address[]) private patientDoctors;
-
-    // total records stored (for stats)
+    mapping(address => address[]) private doctorPatients;
+    mapping(address => mapping(uint256 => string)) private recordMetadata;
+    mapping(address => bool) private registeredDoctors;
     uint256 public totalRecordsStored;
 
-    // ─── Events ───────────────────────────────────────────────────
     event RecordAdded(address indexed patient, uint256 indexed recordIndex, string recordType, uint256 timestamp);
     event AccessGranted(address indexed patient, address indexed doctor, uint256 timestamp);
     event AccessRevoked(address indexed patient, address indexed doctor, uint256 timestamp);
+    event DoctorRegistered(address indexed doctor, uint256 timestamp);
 
-    // ─── Modifiers ────────────────────────────────────────────────
     modifier onlyPatientOrAuthorizedDoctor(address patient) {
         require(
             msg.sender == patient || accessGrants[patient][msg.sender],
@@ -49,20 +37,6 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
         _;
     }
 
-    // ─── Core Functions ───────────────────────────────────────────
-
-    /**
-     * @notice Patient adds an encrypted health record
-     * @param encHeartRate   Encrypted heart rate (einput from client)
-     * @param encOxygen      Encrypted oxygen level
-     * @param encGlucose     Encrypted glucose level
-     * @param encTemp        Encrypted temperature × 10
-     * @param heartProof     FHE input proof for heartRate
-     * @param oxygenProof    FHE input proof for oxygenLevel
-     * @param glucoseProof   FHE input proof for glucoseLevel
-     * @param tempProof      FHE input proof for temperature
-     * @param recordType     Plain-text record category (not sensitive)
-     */
     function addRecord(
         externalEuint32 encHeartRate,
         externalEuint32 encOxygen,
@@ -72,20 +46,19 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
         bytes calldata oxygenProof,
         bytes calldata glucoseProof,
         bytes calldata tempProof,
-        string calldata recordType
+        string calldata recordType,
+        string calldata metadata
     ) external {
         euint32 hr   = FHE.fromExternal(encHeartRate,  heartProof);
         euint32 o2   = FHE.fromExternal(encOxygen,     oxygenProof);
         euint32 gluc = FHE.fromExternal(encGlucose,    glucoseProof);
-        euint32 temp = FHE.fromExternal(encTemp,       tempProof);
+        euint32 temp = FHE.fromExternal(encTemp,        tempProof);
 
-        // Allow the contract itself to handle these ciphertexts
         FHE.allowThis(hr);
         FHE.allowThis(o2);
         FHE.allowThis(gluc);
         FHE.allowThis(temp);
 
-        // Allow the patient (sender) to later decrypt their own data
         FHE.allow(hr,   msg.sender);
         FHE.allow(o2,   msg.sender);
         FHE.allow(gluc, msg.sender);
@@ -101,49 +74,61 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
             exists:       true
         }));
 
-        totalRecordsStored++;
         uint256 idx = patientRecords[msg.sender].length - 1;
+        recordMetadata[msg.sender][idx] = metadata;
+        totalRecordsStored++;
         emit RecordAdded(msg.sender, idx, recordType, block.timestamp);
     }
 
-    /**
-     * @notice Patient grants a doctor access to all their records
-     * @param doctor  Doctor's wallet address
-     */
     function grantAccess(address doctor) external {
         require(doctor != address(0), "MediVault: zero address");
         require(!accessGrants[msg.sender][doctor], "MediVault: already granted");
 
         accessGrants[msg.sender][doctor] = true;
-        patientDoctors[msg.sender].push(doctor);
 
-        // Re-allow all existing ciphertexts for this doctor
-        HealthRecord[] storage records = patientRecords[msg.sender];
-        for (uint256 i = 0; i < records.length; i++) {
-            FHE.allow(records[i].heartRate,    doctor);
-            FHE.allow(records[i].oxygenLevel,  doctor);
-            FHE.allow(records[i].glucoseLevel, doctor);
-            FHE.allow(records[i].temperature,  doctor);
+        bool doctorExists = false;
+        for (uint256 i = 0; i < patientDoctors[msg.sender].length; i++) {
+            if (patientDoctors[msg.sender][i] == doctor) {
+                doctorExists = true;
+                break;
+            }
+        }
+        if (!doctorExists) {
+            patientDoctors[msg.sender].push(doctor);
+        }
+
+        bool patientExists = false;
+        for (uint256 i = 0; i < doctorPatients[doctor].length; i++) {
+            if (doctorPatients[doctor][i] == msg.sender) {
+                patientExists = true;
+                break;
+            }
+        }
+        if (!patientExists) {
+            doctorPatients[doctor].push(msg.sender);
+        }
+
+        for (uint256 i = 0; i < patientRecords[msg.sender].length; i++) {
+            FHE.allow(patientRecords[msg.sender][i].heartRate,    doctor);
+            FHE.allow(patientRecords[msg.sender][i].oxygenLevel,  doctor);
+            FHE.allow(patientRecords[msg.sender][i].glucoseLevel, doctor);
+            FHE.allow(patientRecords[msg.sender][i].temperature,  doctor);
         }
 
         emit AccessGranted(msg.sender, doctor, block.timestamp);
     }
 
-    /**
-     * @notice Patient revokes a doctor's access
-     * @param doctor  Doctor's wallet address
-     */
     function revokeAccess(address doctor) external {
         require(accessGrants[msg.sender][doctor], "MediVault: no active grant");
         accessGrants[msg.sender][doctor] = false;
         emit AccessRevoked(msg.sender, doctor, block.timestamp);
     }
 
-    // ─── View Functions ───────────────────────────────────────────
+    function registerAsDoctor() external {
+        registeredDoctors[msg.sender] = true;
+        emit DoctorRegistered(msg.sender, block.timestamp);
+    }
 
-    /**
-     * @notice Returns the number of records for a patient
-     */
     function getRecordCount(address patient)
         external
         view
@@ -153,10 +138,6 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
         return patientRecords[patient].length;
     }
 
-    /**
-     * @notice Returns encrypted handles for a specific record
-     *         Caller must have FHE permission to decrypt them off-chain
-     */
     function getRecord(address patient, uint256 index)
         external
         view
@@ -175,9 +156,6 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
         return (r.heartRate, r.oxygenLevel, r.glucoseLevel, r.temperature, r.timestamp, r.recordType);
     }
 
-    /**
-     * @notice Returns list of doctors a patient has granted access to
-     */
     function getGrantedDoctors(address patient)
         external
         view
@@ -187,14 +165,38 @@ contract ConfidentialHealthRecords is ZamaEthereumConfig {
         return patientDoctors[patient];
     }
 
-    /**
-     * @notice Check if a doctor has access to a patient's records
-     */
     function hasAccess(address patient, address doctor)
         external
         view
         returns (bool)
     {
         return accessGrants[patient][doctor];
+    }
+
+    function getMyPatients(address doctor)
+        external
+        view
+        returns (address[] memory)
+    {
+        require(msg.sender == doctor, "MediVault: only doctor");
+        return doctorPatients[doctor];
+    }
+
+    function getRecordMetadata(address patient, uint256 index)
+        external
+        view
+        onlyPatientOrAuthorizedDoctor(patient)
+        returns (string memory)
+    {
+        require(index < patientRecords[patient].length, "MediVault: out of bounds");
+        return recordMetadata[patient][index];
+    }
+
+    function isRegisteredDoctor(address account)
+        external
+        view
+        returns (bool)
+    {
+        return registeredDoctors[account];
     }
 }

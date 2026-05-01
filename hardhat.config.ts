@@ -5,14 +5,9 @@ import "@nomicfoundation/hardhat-verify";
 import "@typechain/hardhat";
 import "hardhat-deploy";
 import "hardhat-gas-reporter";
-import type { HardhatUserConfig } from "hardhat/config";
-import { vars } from "hardhat/config";
+import type { HardhatUserConfig } from "hardhat/config.js";
+import { vars } from "hardhat/config.js";
 import "solidity-coverage";
-
-import "./tasks/accounts";
-import "./tasks/FHECounter";
-
-// Run 'npx hardhat vars setup' to see the list of variables that need to be set
 
 const MNEMONIC: string = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
 const INFURA_API_KEY: string = vars.get("INFURA_API_KEY", "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
@@ -38,15 +33,6 @@ const config: HardhatUserConfig = {
         mnemonic: MNEMONIC,
       },
       chainId: 31337,
-    },
-    anvil: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
-      chainId: 31337,
-      url: "http://localhost:8545",
     },
     sepolia: {
       accounts: {

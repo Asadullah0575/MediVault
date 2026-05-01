@@ -47,7 +47,9 @@ export function useMediVault() {
       try { total = Number(await contract.totalRecordsStored()); } catch { total = 0; }
       try { doctors = await contract.getGrantedDoctors(address) as string[]; } catch { doctors = []; }
 
-      setGrantedDoctors(doctors);
+      // Deduplicate doctors list
+const uniqueDoctors = [...new Set((doctors as string[]).map(d => d.toLowerCase()))];
+setGrantedDoctors(uniqueDoctors);
       setTotalStored(total);
 
       const recs: HealthRecord[] = [];
@@ -78,63 +80,118 @@ export function useMediVault() {
 
   // ── addRecord ─────────────────────────────────────────────────
   const addRecord = useCallback(async (
-    heartRate: number,
-    oxygenLevel: number,
-    glucoseLevel: number,
-    temperatureTimes10: number,
-    recordType: string,
-  ) => {
-    setLoading(true); setError(null); setTxHash(null);
-    try {
-      const contract = await getContract(true);
-      const zeroBytes32 = "0x" + "0".repeat(64);
-      const zeroProof = "0x";
-      const tx = await contract.addRecord(
-        zeroBytes32, zeroBytes32, zeroBytes32, zeroBytes32,
-        zeroProof, zeroProof, zeroProof, zeroProof,
-        recordType,
-      );
-      const receipt = await tx.wait();
-      setTxHash(receipt.hash);
-      await loadData();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [getContract, loadData]);
+  heartRate: number,
+  oxygenLevel: number,
+  glucoseLevel: number,
+  temperatureTimes10: number,
+  recordType: string,
+) => {
+  setLoading(true); setError(null); setTxHash(null);
+  try {
+    const contract = await getContract(true);
+    const zeroBytes32 = "0x" + "0".repeat(64);
+    const zeroProof = "0x";
+
+    // Build FHIR-compliant metadata JSON
+    const metadata = JSON.stringify({
+      resourceType: "Observation",
+      status: "final",
+      category: "vital-signs",
+      effectiveDateTime: new Date().toISOString(),
+      fields: {
+        heartRate:    { value: heartRate,              unit: "/min",  loinc: "8867-4"  },
+        oxygenLevel:  { value: oxygenLevel,            unit: "%",     loinc: "2708-6"  },
+        temperature:  { value: temperatureTimes10 / 10, unit: "Cel",  loinc: "8310-5"  },
+        bloodGlucose: { value: glucoseLevel,           unit: "mg/dL", loinc: "2339-0"  },
+      }
+    });
+
+    const tx = await contract.addRecord(
+      zeroBytes32, zeroBytes32, zeroBytes32, zeroBytes32,
+      zeroProof, zeroProof, zeroProof, zeroProof,
+      recordType,
+      metadata,   // ← pass metadata
+    );
+    const receipt = await tx.wait();
+    setTxHash(receipt.hash);
+    await loadData();
+  } catch (e: any) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+}, [getContract, loadData]);
 
   // ── grantAccess ───────────────────────────────────────────────
   const grantAccess = useCallback(async (doctorAddress: string) => {
-    setLoading(true); setError(null);
+  setLoading(true); setError(null);
+  try {
+    const contract = await getContract(true);
+
+    // Check on-chain if address is a registered doctor
+    let isDoctor = false;
     try {
-      const contract = await getContract(true);
-      const tx = await contract.grantAccess(doctorAddress);
-      const receipt = await tx.wait();
-      setTxHash(receipt.hash);
-      await loadData();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
+      isDoctor = await contract.isRegisteredDoctor(doctorAddress);
+    } catch { isDoctor = false; }
+
+    if (!isDoctor) {
+      setError("This wallet is not registered as a doctor on MediVault. They need to sign in as a doctor first.");
       setLoading(false);
+      return;
     }
-  }, [getContract, loadData]);
+
+    const tx = await contract.grantAccess(doctorAddress);
+    const receipt = await tx.wait();
+    setTxHash(receipt.hash);
+    await loadData();
+  } catch (e: any) {
+    setError(e.message);
+  } finally {
+    setLoading(false);
+  }
+}, [getContract, loadData]);
 
   // ── revokeAccess ──────────────────────────────────────────────
   const revokeAccess = useCallback(async (doctorAddress: string) => {
-    setLoading(true); setError(null);
+  setLoading(true); setError(null);
+  try {
+    const contract = await getContract(true);
+
+    // Check if grant actually exists before trying to revoke
+    let hasGrant = false;
     try {
-      const contract = await getContract(true);
-      const tx = await contract.revokeAccess(doctorAddress);
-      const receipt = await tx.wait();
-      setTxHash(receipt.hash);
-      await loadData();
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
+      hasGrant = await contract.hasAccess(address!, doctorAddress);
+    } catch { hasGrant = false; }
+
+    if (!hasGrant) {
+      // Grant doesn't exist on-chain — just remove from UI
+      setGrantedDoctors(prev =>
+        prev.filter(d => d.toLowerCase() !== doctorAddress.toLowerCase())
+      );
       setLoading(false);
+      return;
     }
-  }, [getContract, loadData]);
+
+    const tx = await contract.revokeAccess(doctorAddress);
+    await tx.wait();
+    // Remove from UI immediately
+    setGrantedDoctors(prev =>
+      prev.filter(d => d.toLowerCase() !== doctorAddress.toLowerCase())
+    );
+    await loadData();
+  } catch (e: any) {
+    // If no active grant error, just remove from UI silently
+    if (e.message?.includes("no active grant")) {
+      setGrantedDoctors(prev =>
+        prev.filter(d => d.toLowerCase() !== doctorAddress.toLowerCase())
+      );
+    } else {
+      setError(e.message);
+    }
+  } finally {
+    setLoading(false);
+  }
+}, [getContract, loadData, address]);
 
   return {
     address, isConnected, loading, error, txHash,

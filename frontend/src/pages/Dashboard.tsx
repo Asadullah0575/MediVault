@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useRole } from "../hooks/useRole";
 import { useNavigate } from "react-router-dom";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { motion, AnimatePresence } from "framer-motion";
@@ -29,10 +30,17 @@ export default function Dashboard() {
     addRecord, grantAccess, revokeAccess,
   } = useMediVault();
 
+  const { role } = useRole();
+  
   const [showAdd, setShowAdd]     = useState(false);
   const [showGrant, setShowGrant] = useState(false);
   const [revoking, setRevoking]   = useState<string | null>(null);
 
+// Redirect doctor to doctor portal
+if (role === "doctor") {
+  navigate("/doctor");
+  return null;
+}
   if (!isConnected) {
     return (
       <div className={styles.notConnected}>
@@ -89,7 +97,7 @@ export default function Dashboard() {
           <div className={styles.sideItem} onClick={() => window.open("https://sepolia.etherscan.io", "_blank")}>
             <span>⛓</span> Sepolia Testnet
           </div>
-          <div className={styles.sideItem} onClick={() => navigate("/")}>
+          <div className={styles.sideItem} onClick={() => navigate("/settings")}>
             <span>⚙</span> Settings
           </div>
         </div>

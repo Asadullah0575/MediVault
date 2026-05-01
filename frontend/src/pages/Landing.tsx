@@ -275,10 +275,10 @@ export default function Landing() {
             chainStatus="none"
           />
           {isConnected && (
-            <button className={styles.btnLaunch} onClick={() => navigate("/dashboard")}>
-              Open Dashboard →
-            </button>
-          )}
+  <button className={styles.btnLaunch} onClick={() => navigate("/select-role")}>
+    Open App →
+  </button>
+)}
         </div>
       </nav>
 
@@ -309,7 +309,7 @@ export default function Landing() {
               your data without your explicit permission.
             </p>
             <div className={styles.heroBtns}>
-              <button className={styles.btnPrimary} onClick={() => navigate("/dashboard")}>
+              <button className={styles.btnPrimary} onClick={() => isConnected ? navigate("/select-role") : navigate("/dashboard")}>
                 Get started — free
               </button>
               <a href="#how" className={styles.btnGhost}>
