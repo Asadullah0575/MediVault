@@ -91,7 +91,7 @@ export default function Settings() {
           </div>
           <div className={styles.row}>
             <div className={styles.rowLabel}>FHE Protocol</div>
-            <div className={styles.rowValue}>Zama FHEVM · euint32 encrypted fields</div>
+            <div className={styles.rowValue}>FHEVM · euint32 encrypted fields</div>
           </div>
         </motion.div>
 

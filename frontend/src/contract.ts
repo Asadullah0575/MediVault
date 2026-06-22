@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = "0xbDb8E0Cb6Fc7e0857af7D2EAd33EcFb6CB9AfaDA";
+export const CONTRACT_ADDRESS = "0xFc8F9E843ceE2a02Bf846D56752aD0f736e7DCE7";
 
 export const CONTRACT_ABI = [
   { name: "addRecord", type: "function", stateMutability: "nonpayable",
@@ -78,6 +78,108 @@ export const CONTRACT_ABI = [
   inputs: [{ name: "account", type: "address" }],
   outputs: [{ name: "", type: "bool" }],
 },
+  {
+    name: "sendMessage",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "content", type: "string" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "getMessages",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "with_", type: "address" }],
+    outputs: [{
+      name: "",
+      type: "tuple[]",
+      components: [
+        { name: "sender", type: "address" },
+        { name: "receiver", type: "address" },
+        { name: "content", type: "string" },
+        { name: "timestamp", type: "uint256" },
+      ],
+    }],
+  },
+  {
+    name: "MessageSent",
+    type: "event",
+    inputs: [
+      { name: "sender", type: "address", indexed: true },
+      { name: "receiver", type: "address", indexed: true },
+      { name: "timestamp", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    name: "createPost",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "pseudonym", type: "string" },
+      { name: "condition", type: "string" },
+      { name: "title", type: "string" },
+      { name: "content", type: "string" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "getPostCount",
+    type: "function",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  {
+    name: "getPost",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "index", type: "uint256" }],
+    outputs: [
+      { name: "pseudonym", type: "string" },
+      { name: "condition", type: "string" },
+      { name: "title", type: "string" },
+      { name: "content", type: "string" },
+      { name: "timestamp", type: "uint256" },
+    ],
+  },
+  {
+    name: "createReply",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "postIndex", type: "uint256" },
+      { name: "pseudonym", type: "string" },
+      { name: "isDoctor", type: "bool" },
+      { name: "content", type: "string" },
+    ],
+    outputs: [],
+  },
+  {
+    name: "getRepliesForPost",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "postIndex", type: "uint256" }],
+    outputs: [
+      { name: "pseudonyms", type: "string[]" },
+      { name: "isDoctors", type: "bool[]" },
+      { name: "contents", type: "string[]" },
+      { name: "timestamps", type: "uint256[]" },
+    ],
+  },
+  {
+    name: "updateRecordMetadata",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "patient", type: "address" },
+      { name: "index", type: "uint256" },
+      { name: "newMetadata", type: "string" },
+    ],
+    outputs: [],
+  },
 {
   name: "DoctorRegistered",
   type: "event",

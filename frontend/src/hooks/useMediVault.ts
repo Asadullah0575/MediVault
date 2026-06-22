@@ -56,10 +56,23 @@ setGrantedDoctors(uniqueDoctors);
       for (let i = 0; i < count; i++) {
         try {
           const r = await contract.getRecord(address, i);
+          let metadata = null;
+          try {
+            const metaStr = await contract.getRecordMetadata(address, i);
+            const parsed = JSON.parse(metaStr);
+            metadata = typeof parsed === "string" ? JSON.parse(parsed) : parsed;
+            // Normalize compact format
+            if (metadata?.v) metadata.vitals = metadata.v;
+            if (metadata?.l) metadata.lab = metadata.l;
+            if (metadata?.s) metadata.status = metadata.s;
+            if (metadata?.t) metadata.effectiveDateTime = metadata.t;
+            if (metadata?.n) metadata.notes = metadata.n;
+          } catch { }
           recs.push({
             index: i,
             recordType: r.recordType,
             timestamp: Number(r.timestamp),
+            metadata,
           });
         } catch { break; }
       }
@@ -80,47 +93,49 @@ setGrantedDoctors(uniqueDoctors);
 
   // ── addRecord ─────────────────────────────────────────────────
   const addRecord = useCallback(async (
-  heartRate: number,
-  oxygenLevel: number,
-  glucoseLevel: number,
-  temperatureTimes10: number,
-  recordType: string,
-) => {
-  setLoading(true); setError(null); setTxHash(null);
-  try {
-    const contract = await getContract(true);
-    const zeroBytes32 = "0x" + "0".repeat(64);
-    const zeroProof = "0x";
+    heartRate: number,
+    oxygenLevel: number,
+    glucoseLevel: number,
+    temperatureTimes10: number,
+    recordType: string,
+    fullMetadata?: string, 
+  ) => {
+    console.log("addRecord called with metadata:", fullMetadata);
+    setLoading(true); setError(null); setTxHash(null);
+    try {
+      const contract = await getContract(true);
+      const zeroBytes32 = "0x" + "0".repeat(64);
+      const zeroProof = "0x";
 
-    // Build FHIR-compliant metadata JSON
-    const metadata = JSON.stringify({
-      resourceType: "Observation",
-      status: "final",
-      category: "vital-signs",
-      effectiveDateTime: new Date().toISOString(),
-      fields: {
-        heartRate:    { value: heartRate,              unit: "/min",  loinc: "8867-4"  },
-        oxygenLevel:  { value: oxygenLevel,            unit: "%",     loinc: "2708-6"  },
-        temperature:  { value: temperatureTimes10 / 10, unit: "Cel",  loinc: "8310-5"  },
-        bloodGlucose: { value: glucoseLevel,           unit: "mg/dL", loinc: "2339-0"  },
-      }
-    });
+      // Use fullMetadata if provided, otherwise build basic one
+      const metadata = fullMetadata || JSON.stringify({
+        resourceType: "Observation",
+        status: "final",
+        category: "vital-signs",
+        effectiveDateTime: new Date().toISOString(),
+        fields: {
+          heartRate: heartRate ? { value: heartRate, unit: "/min", loinc: "8867-4" } : null,
+          oxygenLevel: oxygenLevel ? { value: oxygenLevel, unit: "%", loinc: "2708-6" } : null,
+          temperature: temperatureTimes10 ? { value: temperatureTimes10 / 10, unit: "Cel", loinc: "8310-5" } : null,
+          bloodGlucose: glucoseLevel ? { value: glucoseLevel, unit: "mg/dL", loinc: "2339-0" } : null,
+        }
+      });
 
-    const tx = await contract.addRecord(
-      zeroBytes32, zeroBytes32, zeroBytes32, zeroBytes32,
-      zeroProof, zeroProof, zeroProof, zeroProof,
-      recordType,
-      metadata,   // ← pass metadata
-    );
-    const receipt = await tx.wait();
-    setTxHash(receipt.hash);
-    await loadData();
-  } catch (e: any) {
-    setError(e.message);
-  } finally {
-    setLoading(false);
-  }
-}, [getContract, loadData]);
+      const tx = await contract.addRecord(
+        zeroBytes32, zeroBytes32, zeroBytes32, zeroBytes32,
+        zeroProof, zeroProof, zeroProof, zeroProof,
+        recordType,
+        metadata,
+      );
+      const receipt = await tx.wait();
+      setTxHash(receipt.hash);
+      await loadData();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [getContract, loadData]);
 
   // ── grantAccess ───────────────────────────────────────────────
   const grantAccess = useCallback(async (doctorAddress: string) => {
@@ -193,9 +208,23 @@ setGrantedDoctors(uniqueDoctors);
   }
 }, [getContract, loadData, address]);
 
+  const updateRecord = useCallback(async (index: number, updatedMetadata: string) => {
+    setLoading(true); setError(null);
+    try {
+      const contract = await getContract(true);
+      const tx = await contract.updateRecordMetadata(address, index, updatedMetadata);
+      await tx.wait();
+      await loadData();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [getContract, loadData, address]);
+
   return {
     address, isConnected, loading, error, txHash,
     records, grantedDoctors, totalStored,
-    addRecord, grantAccess, revokeAccess, refresh: loadData,
+    addRecord, updateRecord, grantAccess, revokeAccess,
   };
 }

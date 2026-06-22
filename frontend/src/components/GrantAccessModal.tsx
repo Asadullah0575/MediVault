@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import styles from "./Modal.module.css";
+import styles from "./AddRecordModal.module.css";
 
 interface Props {
   onClose: () => void;
