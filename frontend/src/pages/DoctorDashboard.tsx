@@ -100,7 +100,7 @@ export default function DoctorDashboard() {
       try {
         const { BrowserProvider, Contract } = await import("ethers");
         const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-        const provider = new BrowserProvider(walletClient.transport);
+        const provider = new BrowserProvider(walletClient.transport as any);
         const signer = await provider.getSigner();
         const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         if (!(await contract.isRegisteredDoctor(address))) {
@@ -138,7 +138,7 @@ export default function DoctorDashboard() {
       if (!walletClient) return;
       const { BrowserProvider, Contract } = await import("ethers");
       const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-      const provider = new BrowserProvider(walletClient.transport);
+      const provider = new BrowserProvider(walletClient.transport as any);
       const signer = await provider.getSigner();
       const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
@@ -222,7 +222,7 @@ export default function DoctorDashboard() {
       if (walletClient) {
         const { BrowserProvider, Contract } = await import("ethers");
         const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-        const provider = new BrowserProvider(walletClient.transport);
+        const provider = new BrowserProvider(walletClient.transport as any);
         const signer = await provider.getSigner();
         const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
         // Store verification attempt - use profile save as proxy

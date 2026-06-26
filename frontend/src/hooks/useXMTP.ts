@@ -12,7 +12,7 @@ export function useXMTP() {
 
     const getContract = useCallback(async (write = false) => {
         if (!walletClient) throw new Error("No wallet");
-        const provider = new BrowserProvider(walletClient.transport);
+        const provider = new BrowserProvider(walletClient.transport as any);
         const signerOrProvider = write ? await provider.getSigner() : provider;
         return new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signerOrProvider);
     }, [walletClient]);

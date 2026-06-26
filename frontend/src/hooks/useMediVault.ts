@@ -11,6 +11,7 @@ export interface HealthRecord {
   oxygenLevel?: number;
   glucoseLevel?: number;
   temperature?: number;
+  metadata?: any;
 }
 
 export function useMediVault() {
@@ -27,7 +28,7 @@ export function useMediVault() {
   // ── helpers ───────────────────────────────────────────────────
   const getContract = useCallback(async (withSigner = false) => {
     if (!walletClient) throw new Error("Wallet not connected");
-    const provider = new BrowserProvider(walletClient.transport);
+    const provider = new BrowserProvider(walletClient.transport as any);
     const signerOrProvider = withSigner ? await provider.getSigner() : provider;
     return new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signerOrProvider);
   }, [walletClient]);

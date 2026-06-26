@@ -168,7 +168,7 @@ export default function Community() {
         try {
             const { BrowserProvider, Contract } = await import("ethers");
             const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-            const provider = new BrowserProvider(walletClient.transport);
+            const provider = new BrowserProvider(walletClient.transport as any);
             const signer = await provider.getSigner();
             const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
             const tx = await contract.createPost(pseudonym, newCondition, newTitle, newContent);
@@ -188,7 +188,7 @@ export default function Community() {
         try {
             const { BrowserProvider, Contract } = await import("ethers");
             const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-            const provider = new BrowserProvider(walletClient.transport);
+            const provider = new BrowserProvider(walletClient.transport as any);
             const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
             const count = Number(await contract.getPostCount());
             const loaded: Post[] = [];
@@ -226,7 +226,7 @@ export default function Community() {
         try {
             const { BrowserProvider, Contract } = await import("ethers");
             const { CONTRACT_ADDRESS, CONTRACT_ABI } = await import("../contract");
-            const provider = new BrowserProvider(walletClient.transport);
+            const provider = new BrowserProvider(walletClient.transport as any);
             const signer = await provider.getSigner();
             const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
             const postIndex = parseInt(postId.replace("post_", ""));
