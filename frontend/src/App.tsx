@@ -5,7 +5,7 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { wagmiConfig } from "./wagmiConfig";
 import { useAccount } from "wagmi";
-import { useRole } from "./hooks/useRole";
+import { useRole, RoleProvider } from "./hooks/useRole";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import DoctorDashboard from "./pages/DoctorDashboard";
@@ -72,9 +72,11 @@ export default function App() {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <BrowserRouter>
-            <AppRoutes />
-          </BrowserRouter>
+          <RoleProvider>
+            <BrowserRouter>
+              <AppRoutes />
+            </BrowserRouter>
+          </RoleProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
