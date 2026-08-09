@@ -12,6 +12,7 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import Community from "./pages/Community";
 import RoleSelect from "./pages/RoleSelect";
 import Settings from "./pages/Settings";
+import EmergencyProfile from "./pages/EmergencyProfile";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./index.css";
 
@@ -61,6 +62,8 @@ function AppRoutes() {
           roleLoaded && !role ? <Navigate to="/select-role" /> :
             <Settings />
       } />
+
+      <Route path="/emergency/:patientId" element={<EmergencyProfile />} />
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
