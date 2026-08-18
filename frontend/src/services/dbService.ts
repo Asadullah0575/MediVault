@@ -239,6 +239,38 @@ function saveMockStorage(key: string, data: any) {
   }
 }
 
+// ── DATABASE Normalization Helper functions ─────────────────────────
+function camelize<T>(obj: any): T {
+  if (Array.isArray(obj)) {
+    return obj.map(v => camelize(v)) as any;
+  } else if (obj !== null && typeof obj === "object") {
+    return Object.keys(obj).reduce((result, key) => {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+      result[camelKey] = camelize(obj[key]);
+      return result;
+    }, {} as any);
+  }
+  return obj;
+}
+
+function snakify(obj: any): any {
+  if (Array.isArray(obj)) {
+    return obj.map(v => snakify(v));
+  } else if (obj !== null && typeof obj === "object") {
+    // Avoid transforming internal content values of custom metadata objects
+    return Object.keys(obj).reduce((result, key) => {
+      if (key === "metadata" || key === "replies") {
+        result[key] = obj[key];
+      } else {
+        const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        result[snakeKey] = snakify(obj[key]);
+      }
+      return result;
+    }, {} as any);
+  }
+  return obj;
+}
+
 // ── CORE DATA SERVICE ──────────────────────────────────────────────
 export const dbService = {
   // ── RECORDS ───────────────────────────────────────────────────────
@@ -249,7 +281,7 @@ export const dbService = {
         .select("*")
         .eq("patient_address", patientAddress.toLowerCase())
         .order("timestamp", { ascending: false });
-      if (!error && data) return data;
+      if (!error && data) return camelize<HealthRecord[]>(data);
     }
     const mockRecs = getMockStorage<HealthRecord[]>("mv2_records", INITIAL_RECORDS);
     return mockRecs.filter(r => r.patientAddress.toLowerCase() === patientAddress.toLowerCase());
@@ -267,16 +299,16 @@ export const dbService = {
     if (supabase) {
       const { data, error } = await supabase
         .from("health_records")
-        .insert({
+        .insert(snakify({
           id: newRecord.id,
-          patient_address: newRecord.patientAddress,
-          record_type: newRecord.recordType,
+          patientAddress: newRecord.patientAddress,
+          recordType: newRecord.recordType,
           timestamp: newRecord.timestamp,
           metadata: newRecord.metadata
-        })
+        }))
         .select()
         .single();
-      if (!error && data) return data;
+      if (!error && data) return camelize<HealthRecord>(data);
     }
 
     const mockRecs = getMockStorage<HealthRecord[]>("mv2_records", INITIAL_RECORDS);
@@ -316,7 +348,7 @@ export const dbService = {
         .from("access_grants")
         .select("*")
         .eq("patient_address", patientAddress.toLowerCase());
-      if (!error && data) return data;
+      if (!error && data) return camelize<AccessGrant[]>(data);
     }
     const mockGrants = getMockStorage<AccessGrant[]>("mv2_grants", INITIAL_GRANTS);
     return mockGrants.filter(g => g.patientAddress.toLowerCase() === patientAddress.toLowerCase() && g.active && g.expiration > Date.now());
@@ -340,19 +372,19 @@ export const dbService = {
     if (supabase) {
       const { data, error } = await supabase
         .from("access_grants")
-        .insert({
+        .insert(snakify({
           id: newGrant.id,
-          patient_address: newGrant.patientAddress,
-          doctor_address: newGrant.doctorAddress,
-          doctor_name: newGrant.doctorName,
-          records_allowed: newGrant.recordsAllowed,
+          patientAddress: newGrant.patientAddress,
+          doctorAddress: newGrant.doctorAddress,
+          doctorName: newGrant.doctorName,
+          recordsAllowed: newGrant.recordsAllowed,
           created: newGrant.created,
           expiration: newGrant.expiration,
           active: newGrant.active
-        })
+        }))
         .select()
         .single();
-      if (!error && data) return data;
+      if (!error && data) return camelize<AccessGrant>(data);
     }
 
     const mockGrants = getMockStorage<AccessGrant[]>("mv2_grants", INITIAL_GRANTS);
@@ -399,7 +431,8 @@ export const dbService = {
         .eq("active", true)
         .gt("expiration", Date.now());
       if (!error && data) {
-        return data.some((g: any) => g.records_allowed.includes(recordType));
+        const camelized = camelize<any[]>(data);
+        return camelized.some((g: any) => g.recordsAllowed.includes(recordType));
       }
     }
     const mockGrants = getMockStorage<AccessGrant[]>("mv2_grants", INITIAL_GRANTS);
@@ -428,7 +461,7 @@ export const dbService = {
         .select("*")
         .eq("patient_address", patientAddress.toLowerCase())
         .order("timestamp", { ascending: false });
-      if (!error && data) return data;
+      if (!error && data) return camelize<AuditLog[]>(data);
     }
     const mockLogs = getMockStorage<AuditLog[]>("mv2_logs", INITIAL_LOGS);
     return mockLogs
@@ -451,15 +484,15 @@ export const dbService = {
     };
 
     if (supabase) {
-      const { error } = await supabase.from("audit_logs").insert({
+      const { error } = await supabase.from("audit_logs").insert(snakify({
         id: newLog.id,
-        patient_address: newLog.patientAddress,
-        accessor_address: newLog.accessorAddress,
-        accessor_name: newLog.accessorName,
+        patientAddress: newLog.patientAddress,
+        accessorAddress: newLog.accessorAddress,
+        accessorName: newLog.accessorName,
         action: newLog.action,
         details: newLog.details,
         timestamp: newLog.timestamp
-      });
+      }));
       if (!error) return newLog;
     }
 
@@ -477,7 +510,7 @@ export const dbService = {
         .select("*")
         .eq("doctor_address", doctorAddress.toLowerCase())
         .single();
-      if (!error && data) return data;
+      if (!error && data) return camelize<DoctorProfile>(data);
     }
     const mockDocs = getMockStorage<DoctorProfile[]>("mv2_doctors", INITIAL_DOCTORS);
     return mockDocs.find(d => d.doctorAddress.toLowerCase() === doctorAddress.toLowerCase()) || null;
@@ -499,17 +532,17 @@ export const dbService = {
     if (supabase) {
       const { error } = await supabase
         .from("doctor_profiles")
-        .upsert({
-          doctor_address: updatedProfile.doctorAddress,
-          first_name: updatedProfile.firstName,
-          last_name: updatedProfile.lastName,
+        .upsert(snakify({
+          doctorAddress: updatedProfile.doctorAddress,
+          firstName: updatedProfile.firstName,
+          lastName: updatedProfile.lastName,
           specialty: updatedProfile.specialty,
-          license_number: updatedProfile.licenseNumber,
-          hospital_name: updatedProfile.hospitalName,
+          licenseNumber: updatedProfile.licenseNumber,
+          hospitalName: updatedProfile.hospitalName,
           experience: updatedProfile.experience,
           verified: updatedProfile.verified,
-          ipfs_hash: updatedProfile.ipfsHash
-        });
+          ipfsHash: updatedProfile.ipfsHash
+        }));
       if (!error) return true;
     }
 
@@ -535,7 +568,7 @@ export const dbService = {
       const { data, error } = await supabase
         .from("forum_posts")
         .select("*, replies(*)");
-      if (!error && data) return data;
+      if (!error && data) return camelize<ForumPost[]>(data);
     }
     return getMockStorage<ForumPost[]>("mv2_forum", INITIAL_FORUM);
   },
@@ -555,18 +588,18 @@ export const dbService = {
     if (supabase) {
       const { data, error } = await supabase
         .from("forum_posts")
-        .insert({
+        .insert(snakify({
           id: newPost.id,
           pseudonym: newPost.pseudonym,
           condition: newPost.condition,
           title: newPost.title,
           content: newPost.content,
           timestamp: newPost.timestamp,
-          author_address: newPost.authorAddress
-        })
+          authorAddress: newPost.authorAddress
+        }))
         .select()
         .single();
-      if (!error && data) return { ...data, replies: [] };
+      if (!error && data) return { ...camelize<any>(data), replies: [] };
     }
 
     const mockForum = getMockStorage<ForumPost[]>("mv2_forum", INITIAL_FORUM);
@@ -587,17 +620,17 @@ export const dbService = {
     if (supabase) {
       const { data, error } = await supabase
         .from("forum_replies")
-        .insert({
+        .insert(snakify({
           id: newReply.id,
-          post_id: postId,
+          postId: postId,
           pseudonym: newReply.pseudonym,
-          is_doctor: newReply.isDoctor,
+          isDoctor: newReply.isDoctor,
           content: newReply.content,
           timestamp: newReply.timestamp
-        })
+        }))
         .select()
         .single();
-      if (!error && data) return data;
+      if (!error && data) return camelize<ForumReply>(data);
     }
 
     const mockForum = getMockStorage<ForumPost[]>("mv2_forum", INITIAL_FORUM);
@@ -620,7 +653,7 @@ export const dbService = {
         .select("*")
         .or(`and(sender.eq.${u1},receiver.eq.${u2}),and(sender.eq.${u2},receiver.eq.${u1})`)
         .order("timestamp", { ascending: true });
-      if (!error && data) return data;
+      if (!error && data) return camelize<any[]>(data);
     }
 
     const mockMsgs = getMockStorage<any[]>("mv2_messages", []);
@@ -642,10 +675,10 @@ export const dbService = {
     if (supabase) {
       const { data, error } = await supabase
         .from("messages")
-        .insert(newMsg)
+        .insert(snakify(newMsg))
         .select()
         .single();
-      if (!error && data) return data;
+      if (!error && data) return camelize<any>(data);
     }
 
     const mockMsgs = getMockStorage<any[]>("mv2_messages", []);
